@@ -1,0 +1,1 @@
+export type RiskScore = 1 | 100;
