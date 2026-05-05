@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id              String        @id @default(cuid())
+  clerkId         String        @unique
+  name            String
+  email           String
+  phone           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  appointments    Appointment[]
+  settings        BusinessSettings?
+}
+
+model BusinessSettings {
+  id              String   @id @default(cuid())
+  businessId      String   @unique
+  business        Business @relation(fields: [businessId], references: [id])
+
+  reminderHoursBefore Int    @default(24)
+  enableSms           Boolean @default(false)
+  enableIncentives    Boolean @default(true)
+  riskThreshold       Int     @default(60)
+}
+
+model Appointment {
+  id              String    @id @default(cuid())
+  businessId      String
+  business        Business  @relation(fields: [businessId], references: [id])
+
+  clientName      String
+  clientEmail     String
+  clientPhone     String?
+  startTime       DateTime
+  endTime         DateTime?
+  status          String    @default("booked") // booked, confirmed, cancelled, completed, no-show
+  riskScore       Int?
+  notes           String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model ReminderLog {
+  id              String      @id @default(cuid())
+  appointmentId   String
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+
+  channel         String      // email, sms, whatsapp
+  sentAt          DateTime    @default(now())
+  content         String
+  status          String      // sent, delivered, failed
+}
